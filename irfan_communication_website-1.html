@@ -85,5 +85,63 @@ footer{margin-top:45px;background:#111827;color:white;text-align:center;padding:
 </footer>
 
 <a class="float" href="https://wa.me/923489877798" aria-label="WhatsApp">💬</a>
-</body>
+<script>
+const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnIONnkRtRdLG4gQhRIlmheNK7aiUiKKbGbzFA2Kn8Q8nvoBAIloxtltBvqTbM5sMNAipJbhXUdTpF/pub?gid=0&single=true&output=csv";
+
+async function loadProducts() {
+  const grid = document.querySelector("#products .grid");
+
+  try {
+    const response = await fetch(sheetURL);
+    const csv = await response.text();
+
+    const rows = csv.trim().split(/\r?\n/).map(row => {
+      const result = [];
+      let value = "";
+      let quoted = false;
+
+      for (let i = 0; i < row.length; i++) {
+        const ch = row[i];
+
+        if (ch === '"' && row[i + 1] === '"') {
+          value += '"';
+          i++;
+        } else if (ch === '"') {
+          quoted = !quoted;
+        } else if (ch === "," && !quoted) {
+          result.push(value.trim());
+          value = "";
+        } else {
+          value += ch;
+        }
+      }
+
+      result.push(value.trim());
+      return result;
+    });
+
+    grid.innerHTML = "";
+
+    rows.slice(1).forEach(item => {
+      const [name, price, image, description, stock] = item;
+      if (!name) return;
+
+      grid.innerHTML += `
+        <div class="card">
+          ${image ? `<img src="${image}" style="width:100%;height:160px;object-fit:contain">` : '<div class="icon">📱</div>'}
+          <h3>${name}</h3>
+          <div class="price">Rs. ${price}</div>
+          <p>${description || ""}</p>
+          <p>${stock || ""}</p>
+          <a class="btn" href="https://wa.me/923489877798?text=${encodeURIComponent("Mujhe " + name + " chahiye")}" >WhatsApp Order</a>
+        </div>`;
+    });
+
+  } catch (error) {
+    grid.innerHTML = "Products load nahi ho sake. Dobara koshish karein.";
+  }
+}
+
+loadProducts();
+</script> </body>
 </html>
